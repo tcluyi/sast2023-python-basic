@@ -1,5 +1,6 @@
 import argparse
 import json
+import re
 
 def parser_data():
     """
@@ -17,11 +18,10 @@ def parser_data():
     )
 
     parser.add_argument("-f", "--file", help="题库文件", required=True)
-    # TODO: 添加更多参数
+    parser.add_argument("-a", "--article", help="指定文章名", required=False)
     
     args = parser.parse_args()
     return args
-
 
 
 def read_articles(filename):
@@ -33,10 +33,16 @@ def read_articles(filename):
     :return: 一个字典，题库内容
     """
     with open(filename, 'r', encoding="utf-8") as f:
-        # TODO: 用 json 解析文件 f 里面的内容，存储到 data 中
-    
+        data = json.load(f)
+
     return data
 
+
+def get_article(articlename, articles):
+    for article in articles:
+        if article['title'] == articlename:
+            return article
+    return None
 
 
 def get_inputs(hints):
@@ -51,7 +57,8 @@ def get_inputs(hints):
     keys = []
     for hint in hints:
         print(f"请输入{hint}：")
-        # TODO: 读取一个用户输入并且存储到 keys 当中
+        key = input()
+        keys.append(key)
 
     return keys
 
@@ -66,10 +73,7 @@ def replace(article, keys):
     :return: 替换后的文章内容
 
     """
-    for i in range(len(keys)):
-        # TODO: 将 article 中的 {{i}} 替换为 keys[i]
-        # hint: 你可以用 str.replace() 函数，也可以尝试学习 re 库，用正则表达式替换
-
+    article = re.sub(r"\{\{(\d+)\}\}", lambda match: keys[int(match.group(1))-1], article)
     return article
 
 
@@ -77,7 +81,14 @@ if __name__ == "__main__":
     args = parser_data()
     data = read_articles(args.file)
     articles = data["articles"]
+    article = get_article(args.article, articles)
+    if article is None:
+        print(f"Article {args.article} not found")
+        exit()
 
+    keys = get_inputs(article['hints'])
+    new_article = replace(article['article'], keys)
+    print(f"{new_article}")
     # TODO: 根据参数或随机从 articles 中选择一篇文章
     # TODO: 给出合适的输出，提示用户输入
     # TODO: 获取用户输入并进行替换
